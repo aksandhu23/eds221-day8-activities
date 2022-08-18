@@ -1,0 +1,93 @@
+---
+title: "Day 8 Data Viz"
+author: "Amritpal Sandhu"
+date: "2022-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(patchwork)
+library(ggrepel)
+library(gghighlight)
+library(paletteer)
+library(ggExtra)
+library(ggbeeswarm)
+library(gapminder)
+```
+
+```{r}
+space_launch <- read_csv(here::here("data", "space_launches.csv"))
+
+sp_graph <- ggplot(data = space_launch, aes(x = type, y = launch_year)) + geom_line(aes(color = launch_year)) +
+  scale_color_gradient(low = "green", high = "yellow") +
+  theme(panel.grid.major.x = element_line(color = "orange"),
+        panel.grid.minor.y = element_line(color = "green"), 
+        axis.title.x = element_text(color = "purple", size = 17),
+        axis.title.y = element_text(color = "blue", size = 6),
+        axis.text.y = element_text(color = "red"),
+        axis.text.x = element_text(size = 7),
+        plot.title = element_text(color = "cyan4"),
+        text = element_text(size = 19)) + 
+  labs(x = "type", 
+       y = "launch year", 
+       title = "Launch year vs type of launch?", 
+       caption = "caption: To infinity and beyond") +
+  annotate(geom = "text", x = 150, y = 1990, label = "This is a Scatterplot")
+
+sp_graph
+
+ggsave(here::here("R", "space_launch_graph.png"), width = 5, height = 6)
+```
+
+Task 2
+
+```{r}
+sf_ghg <- read_csv(here::here("data","San_Francisco_Communitywide_Greenhouse_Gas_Inventory.csv"))
+
+# Create a summary table of total annual greenhouse gas emissions (only from Emissions_mtCO2e column) by sector_general
+
+emission_summary <- sf_ghg |>
+  group_by(Sector_General)  |>
+  summarize(total_ghg = sum(Emissions_mtCO2e))
+
+
+# Create a summary table of total annual greenhouse gas emissions (only from Emissions_mtCO2e column) by year and commodity type
+
+mission_summary_2 <- sf_ghg |>
+  group_by(Calendar_Year, Commodity_Type)  |>
+  summarize(total_ghg = sum(Emissions_mtCO2e))
+
+# Create a subset of the data that only contains observations from 2005 on, only for observations where Sector_Detail2 contains the pattern “PG&E”, then limit to columns Calendar_Year, Sector_Detail2 and Emissions_mtCO2e
+
+sf_subset <- sf_ghg |>
+  filter(Calendar_Year == 2005) |>
+  group_by(Sector_Detail2) |> 
+  filter(str_detect(Sector_Detail2, pattern = "PG&E"))|>
+  select(Calendar_Year, Sector_Detail2, Emissions_mtCO2e)
+```
+
+Task 3
+
+```{r}
+sf_ghg_year <- sf_ghg |> 
+  filter(Calendar_Year %in% c(2015:2019))
+  
+ggplot(data = sf_ghg_year, aes(x = Calendar_Year, y = Emissions_mtCO2e)) + geom_col(fill = "cyan4", width = .5) +
+  theme_light() + labs (title = "CO2 emissions from 2015 to 2019 in San Francisco", x = "Year", y = "Total CO2 Emissions") + theme(plot.title = element_text (hjust = 0.5)) + 
+  theme(axis.title.x = element_text(size = 11),
+        axis.title.y = element_text(size = 11),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(size = 9),
+        text = element_text(size = 11))
+
+ggsave(here::here("R", "sf_co2_emissions.png"), width = 6, height = 7)
+  
+```
+
